@@ -4,41 +4,165 @@
 <html>
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  	<title>P3 Coloring</title>
+  	<title>Color Me Guessing Game</title>
 
-	<script type="text/javascript" src="{% static 'coloring/vendors/jquery/jquery-3.3.1.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'coloring/vendors/jquery/jquery-3.3.1.min.js' %}"></script>
 	<script type="text/javascript" src="{% static 'coloring/vendors/paper/paper-full.min.js' %}"></script>
 
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>  
+
 	<style type="text/css">
+    
+    .titleline1{
+      font-size: 90px;
+      font-family: "Courier";
+      margin-top:50px;
+      margin-left:40px;
+      text-shadow: 0 0 7px black;
+      color: white;
+    }
+    
+    .titleline2{
+      margin-top:-25px;
+      margin-left:220px;
+      font-size: 90px;
+      font-family: "Courier";
+      text-shadow: 0 0 7px black;
+      color: white;
+    }
+
+    
+    
+    .frame {
+      display:flex;
+      background-color: #ffffff;
+      border-radius: 15px;
+      padding-top: 5%;
+			width: 75%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top:7%;
+      margin-left:12.5%;
+      height:900px;
+		  }
+    
+    .directions {
+      display:flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "Trebuchet MS";
+      font-size: 30px;
+      margin-bottom:20px;
+      width:75vw;
+      margin-top:20px;
+      margin-left:12.5vw;
+      
+		}
+    
 		#color-palette {
-			width: 300px;
-			background-color: #f1f1f1;
+      display:inline-block;
+      border-radius: 15px;
+      padding-top: 5px;
+      padding-bottom: 5px;
+      padding-left:15px;
+			width: 75%;
+			background-color: #CCFFFF;
 			display: flex;
 			flex-wrap: wrap;
-			position: absolute;
-			top: 0;
+			top: 100px;
+      display: flex;
+      align-items: center;
+      margin-left: 12.5%;
 		}
 
 		.swatch {
-			width: 24px;
-			height: 24px;
-			-moz-border-radius: 12px;
-			-webkit-border-radius: 12px;
-			border-radius: 12px;
+			width: 65px;
+			height: 65px;
+			-moz-border-radius: 32px;
+			-webkit-border-radius: 32px;
+			border-radius: 32px;
 			margin: 3px;
 		}
 
 		#myCanvas {
-			padding-left: 0;
-		    padding-right: 0;
-		    margin-left: auto;
-		    margin-right: auto;
-		    display: block;
+      width:100%;
+      height:100%;
 		}
+    
+    .modal-header, h4, .close {
+      background-color: #5cb85c;
+      color:white;
+      text-align: center;
+    }
+    
+    .modal-footer {
+      background-color: #f9f9f9;
+    }
+    
+    
+    .modal-content{
+      margin-top:150px;
+      margin-left:-40px;
+      padding:5%;
+      width:70vw;
+    }
+    
+    #submitbutton{
+      display: flex;
+      justify-content:center;
+      width:100%;
+    }
+    
+    #submit{
+      font-size:25px;   
+    }
+    
+    #undo {
+      border-radius: 10px;
+      padding-top: 5px;
+      padding-bottom: 5px;
+			width: 45%;
+			background-color: #CCFFFF;
+			display: flex;
+      justify-content:center;
+			top: 100px;
+      font-size:25px;
+		}
+    
+    #reset {
+			display:inline-block;
+      border-radius: 10px;
+      padding-top: 5px;
+      padding-bottom: 5px;
+			width: 45%;
+			background-color: #CCFFFF;
+			top: 100px;
+      display: flex;
+      justify-content:center;
+      font-size:25px;
+		}
+    
+    #buttonline{
+      margin-left:12.5%;
+      width:75%;
+      display: flex;
+      flex-direction:row;
+      align-items: center;
+      justify-content: space-between;
+      margin-top:60px;
+    }
+    
 	</style>
 
 	<script type="text/javascript" canvas="canvas">
+    
+    
 		window.onload = function() {
+      
+      
 			var canvas = document.getElementById('myCanvas');
 
 			// coloring page
@@ -47,6 +171,16 @@
 				lastClicked: null,
 				filePath: '/static/coloring/images/mandala-freepik.svg'
 			};	
+      
+      var owl = {
+				item: null,
+				lastClicked: null,
+				filePath: '/static/coloring/images/owl.svg'
+			};
+      
+      var newitem;
+      var fullitem;
+      var initialitem;
 
 			// color palette
 			var cp = {
@@ -96,7 +230,7 @@
 				var tool = new paper.Tool();
 
 				tool.onMouseDown = function (event) {
-				    var hit = mandala.item.hitTest(event.point, { tolerance: 10, fill: true });
+				    var hit = owl.item.hitTest(event.point, { tolerance: 10, fill: true });
 				    if (hit) {
 				        hit.item.fillColor = cp.history[cp.history.length - 1];
 				    }
@@ -130,15 +264,18 @@
 					createColorPalette(cp.options);
 				});
 			}
+      
 
 			function init(custom){
 				paper.setup(canvas);
 				getColorsCreatePalette();
 
-				paper.project.importSVG(mandala.filePath, function(item) { 
-					mandala.item = item._children["design-freepik"];
-				    paper.project.insertLayer(0,mandala.item);
-
+				paper.project.importSVG( owl.filePath, function(item) {
+            fullitem = item; 
+            newitem = item._children["new"];
+            owl.item = item._children["new"]._children["initial"];
+            paper.project.insertLayer(0,owl.item);
+            
 				    if (custom) {
 				    	myCustomInteraction();	
 				    } else {
@@ -146,7 +283,62 @@
 				    }		
 					
 				}); 
+        
+        setTimeout(function(){ 
+          $("#myModal").modal({
+          backdrop: 'static'
+        });
+        }, 15000)
+   
+        
+        $( "#submit" ).click(function(e){
+          var obj = document.getElementsByName("answer");
+          for(var i=0; i<obj.length; i ++){
+              if(obj[i].checked){
+                  var answer=obj[i].value;
+              }
+            }
+          if ( answer !== undefined){
+            $('#myModal').modal('hide')
+            if (answer === "owl"){
+              correctanswer();
+            }else{
+              wronganswer();
+            }
+          }
+        })
+        
+        function correctanswer(){
+          owl.item = fullitem;
+          fullitem.strokeColor="#000000";
+          newitem.strokeColor="#000000";
+          $('#correctModal').modal('show');
+          setTimeout(function(){ 
+            $('#correctModal').modal('hide');
+          }, 1500)
+  
+        }
+        
+         function wronganswer(){
+          owl.item = newitem;
+          newitem.strokeColor="#000000";
+          $('#wrongModal').modal('show');
+          setTimeout(function(){ 
+            $('#wrongModal').modal('hide');
+            newtry();
+          }, 1500)
+        }
+        
+        function newtry(){
+          setTimeout(function(){ 
+          $("#myModal").modal({
+            backdrop: 'static'
+          });
+          }, 15000)
+        }
+        
 			}
+      
 
 			// To see your myGradientInteraction version visit: 
 			// http://<your url>:8000/coloring/?type=gradient
@@ -159,11 +351,96 @@
 				init(true);
 			}
 		}
+    
+    
+    
 	</script>
 </head>
-<body>	
+<body style="background-color:powderblue; height:100vh">
 
-	<canvas id="myCanvas" width="750px" height="750px"></canvas>
-	<div id="color-palette"></div>
+    <div class="titleline1">Color Me</div>
+    <div class="titleline2">Guessing Game</div>
+
+    <div class="directions">   
+      <p>
+        Directions: Guess the image you are coloring to reveal the entire image!
+      </p>
+    </div> 
+    
+    <div id="color-palette"></div>
+
+  <div class="frame">
+	<canvas id="myCanvas"></canvas>
+  </div>
+  
+   <div id="buttonline">
+      <div id="undo" type='button'>Undo</div>
+      <div id="reset" type='button'>Clear</div>
+  
+  </div>
+
+  
+  <div class="container">
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" role="dialog">
+      <div class="modal-dialog">
+
+        <!-- Modal content-->
+        <div class="modal-content" >
+          <h1>
+            Guess the animal you are coloring!
+          </h1>
+          <h1>
+            <label><input name="answer" type="radio" value="tiger" /> Tiger </label> 
+          </h1>
+          <h1>
+            <label><input name="answer" type="radio" value="owl" />  Owl </label> 
+          </h1>
+          <h1>
+            <label><input name="answer" type="radio" value="cat" />  Cat </label> 
+          </h1>
+          <h1>
+            <label><input name="answer" type="radio" value="fox" /> Fox </label> 
+          </h1>
+            <div id="submitbutton">
+              <button id="submit" class="btn btn-primary">Submit</button>
+            </div>
+          
+        </div>
+      
+      </div>
+    </div> 
+    
+    <div class="modal fade" id="correctModal" role="dialog">
+      <div class="modal-dialog">
+
+        <!-- Modal content-->
+        <div class="modal-content" >
+          <h1>
+            Congratulations! Now you can see the entire image!
+          </h1>
+          
+        </div>
+      
+      </div>
+    </div> 
+    
+    <div class="modal fade" id="wrongModal" role="dialog">
+      <div class="modal-dialog">
+
+        <!-- Modal content-->
+        <div class="modal-content" >
+          <h1>
+            Try again!
+          </h1>
+          
+        </div>
+      
+      </div>
+    </div> 
+    
+  </div>
+  
+	
 </body>
 </html>
